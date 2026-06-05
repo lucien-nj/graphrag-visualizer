@@ -122,6 +122,11 @@ const useFileHandler = () => {
       });
 
       if (response.ok) {
+        const contentType = response.headers.get("Content-Type");
+        if (contentType && contentType.includes("text/html")) {
+          console.warn(`File path returned HTML (fallback): ${filePath}`);
+          return false;
+        }
         console.log(`File exists: ${filePath}`);
         return true;
       } else {

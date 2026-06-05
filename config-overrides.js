@@ -24,28 +24,27 @@ module.exports = {
               throw new Error("webpack-dev-server is not defined");
             }
 
-            // 在 Express app 上注册 artifacts 路由
-            // 优先于 static 中间件，直接读取本地绝对路径下的文件
-            // 必须带上 PUBLIC_URL 前缀，因为应用可能运行在子路径下
-            const publicUrl = (process.env.PUBLIC_URL || "").replace(/\/$/, "");
-            const routePath = (publicUrl ? publicUrl : "") + "/artifacts/*";
-
-            devServer.app.get(routePath, (req, res, next) => {
-              const relativePath = req.params[0] || "";
-              const filePath = path.join(resolvedDir, relativePath);
-              if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-                res.sendFile(path.resolve(filePath));
-              } else {
-                next();
+            // 在 Express 最前面拦截所有包含 /artifacts/ 的请求
+            // 不依赖 PUBLIC_URL，无论前缀是什么都能匹配
+            devServer.app.use((req, res, next) => {
+              if (req.method === "GET" || req.method === "HEAD") {
+                const match = req.path.match(/\/artifacts\/(.+)$/);
+                if (match) {
+                  const relativePath = match[1];
+                  const filePath = path.join(resolvedDir, relativePath);
+                  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+                    return res.sendFile(path.resolve(filePath));
+                  }
+                }
               }
+              next();
             });
 
             return originalSetupMiddlewares(middlewares, devServer);
           };
 
-          const publicUrl = (process.env.PUBLIC_URL || "").replace(/\/$/, "");
           console.log(
-            `[config-overrides] Serving artifacts from: ${resolvedDir} -> ${publicUrl || ""}/artifacts`
+            `[config-overrides] Serving artifacts from: ${resolvedDir} (matches any path containing /artifacts/)`
           );
         } else {
           console.warn(
