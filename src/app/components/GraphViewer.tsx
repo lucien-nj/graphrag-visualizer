@@ -289,16 +289,13 @@ const GraphViewer: React.FC<GraphViewerProps> = ({
 
   const paintRing = useCallback(
     (node: CustomNode, ctx: CanvasRenderingContext2D) => {
+      if (!highlightNodes.has(node)) return;
       ctx.beginPath();
       ctx.arc(node.x!, node.y!, NODE_R * 1.4, 0, 2 * Math.PI, false);
-      if (highlightNodes.has(node)) {
-        ctx.fillStyle = node === hoverNode ? "red" : "orange";
-        ctx.globalAlpha = 1; // full opacity
-      } else {
-        ctx.fillStyle = "gray";
-        ctx.globalAlpha = 0.3; // reduced opacity for non-highlighted nodes
-      }
-      ctx.fill();
+      ctx.strokeStyle = node === hoverNode ? "red" : "orange";
+      ctx.lineWidth = 3;
+      ctx.globalAlpha = 1;
+      ctx.stroke();
       ctx.globalAlpha = 1; // reset alpha for other drawings
     },
     [hoverNode, highlightNodes]
@@ -799,9 +796,7 @@ const GraphViewer: React.FC<GraphViewerProps> = ({
             showHighlight ? getlinkDirectionalParticleColor : undefined
           }
           nodeCanvasObjectMode={(node) =>
-            showHighlight && highlightNodes.has(node)
-              ? "before"
-              : showLabels
+            (showHighlight && highlightNodes.has(node)) || showLabels
               ? "after"
               : undefined
           }
