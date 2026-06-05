@@ -16,30 +16,37 @@ module.exports = {
       if (customArtifactsDir) {
         const resolvedDir = path.resolve(customArtifactsDir);
         if (fs.existsSync(resolvedDir)) {
-          // 将用户指定的本地绝对目录映射到 /artifacts 路径
-          // 这样 fetch('/artifacts/xxx.parquet') 会读取本地目录中的文件
-          const existingStatic = config.static;
-          const publicDir = path.resolve(__dirname, "public");
+          const originalSetupMiddlewares =
+            config.setupMiddlewares || ((middlewares) => middlewares);
 
-          config.static = [
-            {
-              directory: resolvedDir,
-              publicPath: "/artifacts",
-              watch: true,
-            },
-          ];
+          config.setupMiddlewares = (middlewares, devServer) => {
+            if (!devServer) {
+              throw new Error("webpack-dev-server is not defined");
+            }
 
-          if (Array.isArray(existingStatic)) {
-            config.static.push(...existingStatic);
-          } else if (existingStatic && existingStatic.directory) {
-            config.static.push(existingStatic);
-          } else {
-            config.static.push({
-              directory: publicDir,
-              publicPath: "/",
-              watch: true,
+            // 在 Express app 上注册 artifacts 路由
+            // 优先于 static 中间件，直接读取本地绝对路径下的文件
+            // 必须带上 PUBLIC_URL 前缀，因为应用可能运行在子路径下
+            const publicUrl = (process.env.PUBLIC_URL || "").replace(/\/$/, "");
+            const routePath = (publicUrl ? publicUrl : "") + "/artifacts/*";
+
+            devServer.app.get(routePath, (req, res, next) => {
+              const relativePath = req.params[0] || "";
+              const filePath = path.join(resolvedDir, relativePath);
+              if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+                res.sendFile(path.resolve(filePath));
+              } else {
+                next();
+              }
             });
-          }
+
+            return originalSetupMiddlewares(middlewares, devServer);
+          };
+
+          const publicUrl = (process.env.PUBLIC_URL || "").replace(/\/$/, "");
+          console.log(
+            `[config-overrides] Serving artifacts from: ${resolvedDir} -> ${publicUrl || ""}/artifacts`
+          );
         } else {
           console.warn(
             `[config-overrides] REACT_APP_ARTIFACTS_DIR="${resolvedDir}" does not exist.`

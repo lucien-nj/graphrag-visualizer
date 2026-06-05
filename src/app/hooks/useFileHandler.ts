@@ -122,18 +122,8 @@ const useFileHandler = () => {
       });
 
       if (response.ok) {
-        const contentType = response.headers.get("Content-Type");
-
-        if (contentType === "application/octet-stream") {
-          // Updated Content-Type check
-          console.log(`File exists: ${filePath}`);
-          return true;
-        } else {
-          // console.warn(
-          //   `File does not exist or incorrect type: ${filePath} (Content-Type: ${contentType})`
-          // );
-          return false;
-        }
+        console.log(`File exists: ${filePath}`);
+        return true;
       } else {
         console.warn(
           `File does not exist: ${filePath} (status: ${response.status})`
