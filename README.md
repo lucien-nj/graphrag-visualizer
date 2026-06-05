@@ -104,3 +104,43 @@ To load `.parquet` files automatically when the application starts, place your P
   - `public/artifacts/create_final_covariates.parquet`
 
 If the files are placed in the `public/artifacts` folder, the app will automatically load and display them on startup.
+
+### Loading from an Arbitrary Local Directory
+
+If your GraphRAG output directory is located elsewhere on your machine and you do not want to copy the files into `public/artifacts`, you can specify an **absolute path** via the `REACT_APP_ARTIFACTS_DIR` environment variable. This works in development mode (`npm start`) by mapping the local directory to the `/artifacts` URL path.
+
+**Usage:**
+
+- **macOS / Linux:**
+
+  ```bash
+  REACT_APP_ARTIFACTS_DIR=/absolute/path/to/your/graphrag/output npm start
+  ```
+
+- **Windows (Command Prompt):**
+
+  ```cmd
+  set REACT_APP_ARTIFACTS_DIR=C:\absolute\path\to\your\graphrag\output
+  npm start
+  ```
+
+- **Windows (PowerShell):**
+
+  ```powershell
+  $env:REACT_APP_ARTIFACTS_DIR="C:\absolute\path\to\your\graphrag\output"
+  npm start
+  ```
+
+When `REACT_APP_ARTIFACTS_DIR` is set, the development server will serve files from that directory at the `/artifacts` URL, so the app can fetch them just like the default `public/artifacts` folder. There is no need to copy or duplicate your data.
+
+### Loading from a Custom URL
+
+If you are hosting your parquet files on a separate local server (e.g., a Python HTTP server or Nginx), you can set the `REACT_APP_ARTIFACTS_URL` environment variable to the base URL:
+
+```bash
+REACT_APP_ARTIFACTS_URL=http://localhost:8080/my-data npm start
+```
+
+The app will then attempt to load parquet files from:
+- `http://localhost:8080/my-data/create_final_*.parquet`
+- `http://localhost:8080/my-data/*.parquet`
