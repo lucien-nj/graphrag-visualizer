@@ -147,12 +147,30 @@ const useFileHandler = () => {
   };
 
   const loadDefaultFiles = async (defaultPath?: string) => {
-    const artifactsPath = defaultPath || process.env.REACT_APP_DEFAULT_ARTIFACTS_PATH || "artifacts";
+    const artifactsUrl =
+      defaultPath ||
+      process.env.REACT_APP_ARTIFACTS_URL ||
+      process.env.REACT_APP_DEFAULT_ARTIFACTS_PATH;
+
     const filesToLoad = [];
 
     for (const baseName of baseFileNames) {
-      const prefixedPath = process.env.PUBLIC_URL + `/${artifactsPath}/create_final_${baseName}`;
-      const unprefixedPath = process.env.PUBLIC_URL + `/${artifactsPath}/${baseName}`;
+      let prefixedPath: string;
+      let unprefixedPath: string;
+
+      if (artifactsUrl) {
+        // 支持任意绝对 URL（如 http://localhost:8080/data）
+        // 或相对于 PUBLIC_URL 的子路径
+        const base = artifactsUrl.startsWith("http")
+          ? artifactsUrl
+          : process.env.PUBLIC_URL + `/${artifactsUrl}`;
+        prefixedPath = `${base}/create_final_${baseName}`;
+        unprefixedPath = `${base}/${baseName}`;
+      } else {
+        prefixedPath =
+          process.env.PUBLIC_URL + `/artifacts/create_final_${baseName}`;
+        unprefixedPath = process.env.PUBLIC_URL + `/artifacts/${baseName}`;
+      }
 
       if (await checkFileExists(prefixedPath)) {
         filesToLoad.push(prefixedPath);
