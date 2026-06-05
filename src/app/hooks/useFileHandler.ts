@@ -146,13 +146,14 @@ const useFileHandler = () => {
     }
   };
 
-  const loadDefaultFiles = async () => {
+  const loadDefaultFiles = async (defaultPath?: string) => {
+    const artifactsPath = defaultPath || process.env.REACT_APP_DEFAULT_ARTIFACTS_PATH || "artifacts";
     const filesToLoad = [];
 
     for (const baseName of baseFileNames) {
-      const prefixedPath = process.env.PUBLIC_URL + `/artifacts/create_final_${baseName}`;
-      const unprefixedPath = process.env.PUBLIC_URL + `/artifacts/${baseName}`;
-  
+      const prefixedPath = process.env.PUBLIC_URL + `/${artifactsPath}/create_final_${baseName}`;
+      const unprefixedPath = process.env.PUBLIC_URL + `/${artifactsPath}/${baseName}`;
+
       if (await checkFileExists(prefixedPath)) {
         filesToLoad.push(prefixedPath);
       } else if (await checkFileExists(unprefixedPath)) {
